@@ -1,6 +1,9 @@
+require 'concerns/common'
+
 module Rubijan
   class Yaku
     module SevenPairs
+      include Concerns::Common
 
       def self.name
         '七対子'

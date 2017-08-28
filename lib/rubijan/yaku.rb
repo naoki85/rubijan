@@ -33,74 +33,39 @@ module Rubijan
     # {not_claimed: [11, 11],
     #  melted_kan: [[12, 12, 12, 12], [25, 25, 25, 25]],
     #  concealed_kan: [[36, 36, 36, 36], [47, 47, 47, 47]]}
-    #
-    # @param [Hash]
-    def initialize(input_hands)
-      @win_hands = []
-      validate_input_hands(input_hands)
+    def initialize(input_hand)
+      raise InvalidInputError unless input_hand.is_a?(Hash) && input_hand.key?(:not_claimed)
+      @input_hands = input_hand
+      @count_of_tiles = 0
+      @claimed_set_array = []
 
       # Case not claimed,
-      @count_of_tiles = 0
-      set_count_group_by_tile_not_claimed(input_hands[:not_claimed])
+      set_count_group_by_tile_not_claimed(input_hand[:not_claimed])
+      return @win_hand if @win_hand = check_special_patterns_of_not_claimed
+      shape_not_claimed_hand
+
       # Case claimed,
-      @claimed_set_array = []
-      set_claimed_set_array(input_hands[:claimed]) if input_hands.key?(:claimed)
+      set_claimed_set_array(input_hand[:claimed]) if input_hand.key?(:claimed)
+
       # Case kan,
-      set_kan(input_hands)
+      set_kan_melted_and_concealed(input_hand)
       raise InvalidInputError unless appropriate_hands_count?
-      @yaku = []
-    end
-
-    # Decide yaku from input hands.
-    # Return value is for example,
-    # ['タンヤオ', '平和', '一盃口']
-    # @return [String]
-    def decision
-      # pattern 1: Thirteen orphans
-      if ThirteenOrphans.check(@count_group_by_tile_not_claimed)
-        return @yaku << ThirteenOrphans.name
-      end
-
-      # Pattern 2: Nine gates
-      if NineGates.check(@count_group_by_tile_not_claimed)
-        return @yaku << NineGates.name
-      end
-
-      # pattern 3: Seven pairs
-      if SevenPairs.check(@count_group_by_tile_not_claimed)
-        @yaku << SevenPairs.name
-        check_yaku_with_seven_pairs
-        return @yaku
-      end
-
-      @count_group_by_tile_not_claimed.each do |tile, count|
-        @tmp_win_hands = []
-        @tmp_count_group_by_tile_not_claimed = @count_group_by_tile_not_claimed.dup
-        next if count < 2
-        @tmp_count_group_by_tile_not_claimed[tile] -= 2
-        @tmp_win_hands << Array.new(2, tile)
-
-        # 1. Check pungs of honours or suits
-        check_pungs_of_alone_or_honour_tiles
-        # 2. Check chows
-        check_chows
-        # 3. Again, Check pungs
-        check_pungs
-        # 4. Check whether this pattern win?
-        next unless win?
-
-        @tmp_win_hands.each do |set|
-          @win_hands << set
-        end
-        break
-      end
-      @win_hands
+      @win_hand
     end
 
     private
 
-    def validate_input_hands(input_hands)
-      raise InvalidInputError unless input_hands.is_a?(Hash) && input_hands.key?(:not_claimed)
+    def check_special_patterns_of_not_claimed
+      # Special pattern 1: Thirteen orphans
+      if ThirteenOrphans.check(@count_group_by_tile_not_claimed)
+        return ThirteenOrphans.shape(@count_group_by_tile_not_claimed)
+      end
+
+      # Special pattern 2: Seven pairs
+      if SevenPairs.check(@count_group_by_tile_not_claimed)
+        return SevenPairs.shape(@count_group_by_tile_not_claimed)
+      end
+      false
     end
 
     def set_count_group_by_tile_not_claimed(input_hands_of_not_claimed)
@@ -119,6 +84,31 @@ module Rubijan
       @count_group_by_tile_not_claimed = Hash[tmp_count_group_by_tile_not_claimed.sort]
     end
 
+    def shape_not_claimed_hand
+      @count_group_by_tile_not_claimed.each do |tile, count|
+        @tmp_win_hand = []
+        @tmp_count_group_by_tile_not_claimed = @count_group_by_tile_not_claimed.dup
+        next if count < 2
+        @tmp_count_group_by_tile_not_claimed[tile] -= 2
+        @tmp_win_hand << Array.new(2, tile)
+
+        # 1. Check pungs of honours or suits
+        check_pungs_of_alone_or_honour_tiles
+        # 2. Check chows
+        check_chows
+        # 3. Again, Check pungs
+        check_pungs
+        # 4. Check whether this pattern OK?
+        next unless checking_not_claimed_finished?
+
+        @tmp_win_hand.each do |set|
+          @win_hand << set
+        end
+        return true
+      end
+      return false unless @win_hand
+    end
+
     def set_claimed_set_array(input_hands_of_claimed)
       input_hands_of_claimed.each do |set|
         tmp_count_group_by_tile_claimed = []
@@ -135,49 +125,14 @@ module Rubijan
       end
     end
 
-    def set_kan(input_hands)
+    def set_kan_melted_and_concealed(input_hands)
       @kan = {}
       @kan[:melted] = []
       @kan[:concealed] = []
       return unless input_hands.key?(:melted_kan) || input_hands.key?(:concealed_kan)
 
-      set_kan_and_win_hands(input_hands, 'melted_kan')
-      set_kan_and_win_hands(input_hands, 'concealed_kan')
-    end
-
-    def set_kan_and_win_hands(hash, target_symbol)
-      if hash.key?(target_symbol.to_sym)
-        hash[target_symbol.to_sym].each do |kan|
-          raise InvalidInputError unless kan == 4
-          raise InvalidInputError unless TILE_TYPES.include?(kan[0].to_i)
-          @kan[target_symbol.to_sym] << kan[0].to_i
-          @win_hands.push(kan[0].to_i, kan[0].to_i, kan[0].to_i)
-          @count_of_tiles += 3
-        end
-      end
-    end
-
-    def appropriate_hands_count?
-      @count_of_tiles == 14
-    end
-
-    def check_pung(set)
-      set.sort!
-      if set[0] == set[1] && set[0] == set[2]
-        @win_hands << set
-      end
-    end
-
-    def check_chow(set)
-      set.sort!
-      if set.include?(set[0] + 1) && set.include?(set[0] + 1)
-        @win_hands << set
-      end
-    end
-
-    # @return [Boolean]
-    def claimed?
-      @claimed_set_array.count > 0
+      set_kan_and_win_hand(input_hands, 'melted_kan')
+      set_kan_and_win_hand(input_hands, 'concealed_kan')
     end
 
     # If count of honour or suit is over 3, suppose this tiles is pung.
@@ -187,7 +142,7 @@ module Rubijan
         next if count < 3
         if alone?(tile) || HONOURS.include?(tile)
           @tmp_count_group_by_tile_not_claimed[tile] -= 3
-          @tmp_win_hands << Array.new(3, tile)
+          @tmp_win_hand << Array.new(3, tile)
         end
       end
     end
@@ -202,7 +157,7 @@ module Rubijan
       @tmp_count_group_by_tile_not_claimed.each do |tile, count|
         next unless count >= 3
         @tmp_count_group_by_tile_not_claimed[tile] -= 3
-        @tmp_win_hands << Array.new(3, tile)
+        @tmp_win_hand << Array.new(3, tile)
       end
     end
 
@@ -216,7 +171,7 @@ module Rubijan
               @tmp_count_group_by_tile_not_claimed[tile]     -= 1
               @tmp_count_group_by_tile_not_claimed[tile + 1] -= 1
               @tmp_count_group_by_tile_not_claimed[tile + 2] -= 1
-              @tmp_win_hands << [tile, tile + 1, tile + 2]
+              @tmp_win_hand << [tile, tile + 1, tile + 2]
             end
           end
         end
@@ -224,7 +179,7 @@ module Rubijan
     end
 
     # @return [Boolean]
-    def win?
+    def checking_not_claimed_finished?
       flg_win = false
       @tmp_count_group_by_tile_not_claimed.each_value do |count|
         flg_win = true
@@ -236,37 +191,33 @@ module Rubijan
       flg_win
     end
 
-    # @return [Boolean]
-    def one_color?
-      before_tile = 0
-      @hands_one_dimension.each do |tile|
-        unless before_tile.zero?
-          return false if (tile - before_tile).abs >= 9
+    def set_kan_and_win_hand(hash, target_symbol)
+      if hash.key?(target_symbol.to_sym)
+        hash[target_symbol.to_sym].each do |kan|
+          raise InvalidInputError unless kan == 4
+          raise InvalidInputError unless TILE_TYPES.include?(kan[0].to_i)
+          @kan[target_symbol.to_sym] << kan[0].to_i
+          @win_hand.push(kan[0].to_i, kan[0].to_i, kan[0].to_i)
+          @count_of_tiles += 3
         end
-        before_tile = tile
       end
     end
 
-    # @return [Boolean]
-    def one_color_with_honours?
-      before_tile = 0
-      @hands_one_dimension.each do |tile|
-        unless before_tile.zero?
-          if (tile - before_tile).abs >= 9
-            next if HONOURS.include?(tile)
-            return false
-          end
-        end
-        before_tile = tile
+    def appropriate_hands_count?
+      @count_of_tiles == 14
+    end
+
+    def check_pung(set)
+      set.sort!
+      if set[0] == set[1] && set[0] == set[2]
+        @win_hand << set
       end
     end
 
-    def check_yaku_with_seven_pairs
-      if AllSimples.check(@count_group_by_tile_not_claimed)
-        @yaku << AllSimples.name
-      end
-      if MixedOutside.check(@count_group_by_tile_not_claimed)
-        @yaku << MixedOutside.name
+    def check_chow(set)
+      set.sort!
+      if set.include?(set[0] + 1) && set.include?(set[0] + 1)
+        @win_hand << set
       end
     end
   end

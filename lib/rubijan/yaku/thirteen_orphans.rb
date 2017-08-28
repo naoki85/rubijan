@@ -1,6 +1,9 @@
+require 'concerns/common'
+
 module Rubijan
   class Yaku
     module ThirteenOrphans
+      include Concerns::Common
       NECESSARY_TILES = [11, 19, 21, 29, 31, 39, 41, 42, 43, 44, 45, 46, 47].freeze
 
       def self.name
