@@ -42,6 +42,7 @@ module Rubijan
       # Case not claimed,
       set_count_group_by_tile_not_claimed(input_hand[:not_claimed])
       return @win_hand if @win_hand = check_special_patterns_of_not_claimed
+      @win_hand = []
       shape_not_claimed_hand
 
       # Case claimed,
@@ -197,7 +198,7 @@ module Rubijan
           raise InvalidInputError unless kan == 4
           raise InvalidInputError unless TILE_TYPES.include?(kan[0].to_i)
           @kan[target_symbol.to_sym] << kan[0].to_i
-          @win_hand.push(kan[0].to_i, kan[0].to_i, kan[0].to_i)
+          @win_hand << [kan[0].to_i, kan[0].to_i, kan[0].to_i]
           @count_of_tiles += 3
         end
       end

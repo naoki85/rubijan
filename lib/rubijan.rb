@@ -1,9 +1,6 @@
 require 'rubijan/errors'
 require 'rubijan/version'
 require 'rubijan/yaku'
-require 'rubijan/yaku/all_simples'
-require 'rubijan/yaku/mixed_outside'
-require 'rubijan/yaku/pure_outside'
 require 'rubijan/yaku/seven_pairs'
 require 'rubijan/yaku/thirteen_orphans'
 
@@ -23,7 +20,7 @@ module Rubijan
   # @param  [Hash]
   # @return [String]
   def self.decision_yaku(input_hands)
-    Yaku.new(input_hands).decision
+    Yaku.new(input_hands)
   end
 
 end

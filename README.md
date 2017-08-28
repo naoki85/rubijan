@@ -1,15 +1,13 @@
-# RubijanYaku
+# Rubijan
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/rubijan_yaku`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+Rubijan is a Gem aimed at helping Mahjang applications.   
 
 ## Installation
 
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'rubijan_yaku'
+gem 'rubijan'
 ```
 
 And then execute:
@@ -18,11 +16,15 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install rubijan_yaku
+    $ gem install rubijan
 
 ## Usage
 
-TODO: Write usage instructions here
+If you will use Rubijan, need to require this gem.
+
+```ruby
+require 'rubijan'
+``` 
 
 ## Development
 
@@ -32,7 +34,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/rubijan_yaku. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
+Bug reports and pull requests are welcome on GitHub at [https://github.com/naoki85/rubijan.git](https://github.com/naoki85/rubijan.git). This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
 
 ## License
 
