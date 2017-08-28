@@ -1,0 +1,3 @@
+module Rubijan
+  VERSION = '0.1.0'
+end
