@@ -1,6 +1,6 @@
 require "bundler/setup"
 require "rubijan"
-require "rubijan/yaku"
+require "rubijan/yaku_identifier"
 require "rubijan/yaku/seven_pairs"
 require "rubijan/yaku/thirteen_orphans"
 require "rubijan/errors"
